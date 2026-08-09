@@ -44,7 +44,7 @@ export default function LoginPage() {
       <div className="w-full max-w-sm rounded-lg border border-zinc-200 bg-white p-8 shadow-sm">
         <h1 className="text-xl font-semibold text-zinc-900">Entrar</h1>
         <p className="mt-1 text-sm text-zinc-500">
-          Acesse com sua matricula e senha.
+          Acesse com seu email e senha.
         </p>
 
         <form className="mt-6 space-y-4" onSubmit={handleSubmit} noValidate>
@@ -53,7 +53,7 @@ export default function LoginPage() {
               htmlFor="registration_number"
               className="block text-sm font-medium text-zinc-700"
             >
-              Matricula
+              Email
             </label>
             <input
               id="registration_number"
