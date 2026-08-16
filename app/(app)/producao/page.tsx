@@ -20,6 +20,44 @@ function OrdemProducaoIcon() {
   );
 }
 
+function ProdutosIcon() {
+  return (
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M21 8 12 3 3 8l9 5 9-5Z" />
+      <path d="M3 8v8l9 5 9-5V8" />
+      <path d="M12 13v8" />
+    </svg>
+  );
+}
+
+function EtapasIcon() {
+  return (
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M4 6h16" />
+      <path d="M4 12h10" />
+      <path d="M4 18h6" />
+    </svg>
+  );
+}
+
 export default function ProducaoPage() {
   return (
     <ModulePage
@@ -34,6 +72,22 @@ export default function ProducaoPage() {
           icon: <OrdemProducaoIcon />,
           iconBg: "bg-indigo-100",
           iconColor: "text-indigo-600",
+        },
+        {
+          label: "Produtos",
+          description: "Cadastre e gerencie os produtos utilizados nas ordens de produção.",
+          href: "/producao/produtos",
+          icon: <ProdutosIcon />,
+          iconBg: "bg-emerald-100",
+          iconColor: "text-emerald-600",
+        },
+        {
+          label: "Etapas",
+          description: "Cadastre modelos de etapa reutilizáveis para usar nas ordens de produção.",
+          href: "/producao/etapas",
+          icon: <EtapasIcon />,
+          iconBg: "bg-amber-100",
+          iconColor: "text-amber-600",
         },
       ]}
     />
