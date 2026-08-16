@@ -1,11 +1,12 @@
 export type UserRole = "operator" | "manager" | "analyst" | "admin";
 
-export interface MockUser {
+export interface SessionUser {
+  id: number;
   name: string;
-  registration_number: string;
+  registrationNumber: string;
   role: UserRole;
-  email?: string;
-  branch_id: number | null;
+  email: string;
+  branchId: number | null;
 }
 
 export const ROLE_LABELS: Record<UserRole, string> = {

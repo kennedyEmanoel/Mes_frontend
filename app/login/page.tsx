@@ -5,21 +5,22 @@ import { useState, FormEvent } from "react";
 import { useRouter } from "next/navigation";
 
 interface FormErrors {
-  registration_number?: string;
+  email?: string;
   password?: string;
+  form?: string;
 }
 
 export default function LoginPage() {
   const router = useRouter();
-  const [registrationNumber, setRegistrationNumber] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState<FormErrors>({});
   const [submitting, setSubmitting] = useState(false);
 
   function validate(): FormErrors {
     const nextErrors: FormErrors = {};
-    if (!registrationNumber.trim()) {
-      nextErrors.registration_number = "Informe a matricula.";
+    if (!email.trim()) {
+      nextErrors.email = "Informe o e-mail.";
     }
     if (!password) {
       nextErrors.password = "Informe a senha.";
@@ -27,7 +28,7 @@ export default function LoginPage() {
     return nextErrors;
   }
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     const nextErrors = validate();
@@ -35,8 +36,31 @@ export default function LoginPage() {
     if (Object.keys(nextErrors).length > 0) return;
 
     setSubmitting(true);
-    // Simulacao local: sem chamada de API real, sem token.
-    router.push("/profile");
+
+    try {
+      const response = await fetch("/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim(), password }),
+      });
+
+      if (!response.ok) {
+        const body = await response.json().catch(() => null);
+        setErrors({
+          form:
+            response.status === 401
+              ? "E-mail ou senha invalidos."
+              : (body?.message ?? "Nao foi possivel entrar. Tente novamente."),
+        });
+        setSubmitting(false);
+        return;
+      }
+
+      router.push("/profile");
+    } catch {
+      setErrors({ form: "Nao foi possivel conectar ao servidor." });
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -50,25 +74,23 @@ export default function LoginPage() {
         <form className="mt-6 space-y-4" onSubmit={handleSubmit} noValidate>
           <div>
             <label
-              htmlFor="registration_number"
+              htmlFor="email"
               className="block text-sm font-medium text-zinc-700"
             >
               Email
             </label>
             <input
-              id="registration_number"
-              name="registration_number"
-              type="text"
+              id="email"
+              name="email"
+              type="email"
               autoComplete="username"
-              value={registrationNumber}
-              onChange={(e) => setRegistrationNumber(e.target.value)}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               className="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-zinc-500 focus:ring-1 focus:ring-zinc-500"
-              placeholder="Ex: 123456"
+              placeholder="voce@bwsiot.com"
             />
-            {errors.registration_number && (
-              <p className="mt-1 text-xs text-red-600">
-                {errors.registration_number}
-              </p>
+            {errors.email && (
+              <p className="mt-1 text-xs text-red-600">{errors.email}</p>
             )}
           </div>
 
@@ -93,6 +115,10 @@ export default function LoginPage() {
               <p className="mt-1 text-xs text-red-600">{errors.password}</p>
             )}
           </div>
+
+          {errors.form && (
+            <p className="text-sm text-red-600">{errors.form}</p>
+          )}
 
           <button
             type="submit"

@@ -3,8 +3,18 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:3000
     ports:
       - "3001:3000"
     environment:
       NODE_ENV: production
+      API_INTERNAL_URL: http://nestjs_api:3000
     restart: unless-stopped
+    networks:
+      - mes_shared
+
+networks:
+  mes_shared:
+    external: true
+    name: mes_shared

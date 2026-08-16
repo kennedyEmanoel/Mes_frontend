@@ -3,13 +3,10 @@
 import Link from "next/link";
 import { useState, FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import { UserRole } from "../types";
-import { saveMockUser } from "../mockSession";
+import { ApiError, registerUser } from "../lib/api";
 
 interface FormState {
   name: string;
-  registration_number: string;
-  role: UserRole;
   email: string;
   password: string;
   branch_id: string;
@@ -17,26 +14,22 @@ interface FormState {
 
 interface FormErrors {
   name?: string;
-  registration_number?: string;
-  role?: string;
   email?: string;
   password?: string;
   branch_id?: string;
+  form?: string;
 }
 
-const ROLE_OPTIONS: { value: UserRole; label: string }[] = [
-  { value: "operator", label: "Operador" },
-  { value: "manager", label: "Gerente" },
-  { value: "analyst", label: "Analista" },
-  { value: "admin", label: "Administrador" },
+const BRANCH_OPTIONS: { value: string; label: string }[] = [
+  { value: "3", label: "Santa Rita do Sapucaí (SRS)" },
+  { value: "4", label: "Belo Horizonte (BH)" },
+  { value: "2", label: "São Paulo (SP)" },
 ];
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const INITIAL_STATE: FormState = {
   name: "",
-  registration_number: "",
-  role: "operator",
   email: "",
   password: "",
   branch_id: "",
@@ -48,18 +41,10 @@ export default function RegisterPage() {
   const [errors, setErrors] = useState<FormErrors>({});
   const [submitting, setSubmitting] = useState(false);
 
-  const isAdmin = form.role === "admin";
+  const isAdmin = false;
 
   function updateField<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
-  }
-
-  function handleRoleChange(role: UserRole) {
-    setForm((prev) => ({
-      ...prev,
-      role,
-      branch_id: role === "admin" ? "" : prev.branch_id,
-    }));
   }
 
   function validate(state: FormState): FormErrors {
@@ -69,15 +54,9 @@ export default function RegisterPage() {
       nextErrors.name = "Informe o nome.";
     }
 
-    if (!state.registration_number.trim()) {
-      nextErrors.registration_number = "Informe a matricula.";
-    }
-
-    if (!state.role) {
-      nextErrors.role = "Selecione um perfil.";
-    }
-
-    if (state.email.trim() && !EMAIL_REGEX.test(state.email.trim())) {
+    if (!state.email.trim()) {
+      nextErrors.email = "Informe o e-mail.";
+    } else if (!EMAIL_REGEX.test(state.email.trim())) {
       nextErrors.email = "Informe um e-mail valido.";
     }
 
@@ -87,18 +66,14 @@ export default function RegisterPage() {
       nextErrors.password = "A senha deve ter no minimo 6 caracteres.";
     }
 
-    if (state.role !== "admin") {
-      if (!state.branch_id.trim()) {
-        nextErrors.branch_id = "Informe a filial.";
-      } else if (!/^\d+$/.test(state.branch_id.trim())) {
-        nextErrors.branch_id = "A filial deve ser um numero.";
-      }
+    if (!isAdmin && !state.branch_id.trim()) {
+      nextErrors.branch_id = "Selecione a filial.";
     }
 
     return nextErrors;
   }
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     const nextErrors = validate(form);
@@ -107,16 +82,24 @@ export default function RegisterPage() {
 
     setSubmitting(true);
 
-    // Simulacao local: sem chamada de API real, sem persistencia de token.
-    saveMockUser({
-      name: form.name.trim(),
-      registration_number: form.registration_number.trim(),
-      role: form.role,
-      email: form.email.trim() || undefined,
-      branch_id: form.role === "admin" ? null : Number(form.branch_id),
-    });
-
-    router.push("/login");
+    try {
+      await registerUser({
+        name: form.name.trim(),
+        role: "operator",
+        email: form.email.trim(),
+        password: form.password,
+        branch_id: isAdmin ? undefined : Number(form.branch_id),
+      });
+      router.push("/login");
+    } catch (error) {
+      setErrors({
+        form:
+          error instanceof ApiError
+            ? error.message
+            : "Nao foi possivel criar a conta. Tente novamente.",
+      });
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -145,49 +128,8 @@ export default function RegisterPage() {
           </div>
 
           <div>
-            <label
-              htmlFor="registration_number"
-              className="block text-sm font-medium text-zinc-700"
-            >
-              Matricula
-            </label>
-            <input
-              id="registration_number"
-              name="registration_number"
-              type="text"
-              value={form.registration_number}
-              onChange={(e) => updateField("registration_number", e.target.value)}
-              className="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-zinc-500 focus:ring-1 focus:ring-zinc-500"
-              placeholder="Ex: 123456"
-            />
-            {errors.registration_number && (
-              <p className="mt-1 text-xs text-red-600">{errors.registration_number}</p>
-            )}
-          </div>
-
-          <div>
-            <label htmlFor="role" className="block text-sm font-medium text-zinc-700">
-              Perfil
-            </label>
-            <select
-              id="role"
-              name="role"
-              value={form.role}
-              onChange={(e) => handleRoleChange(e.target.value as UserRole)}
-              className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 outline-none focus:border-zinc-500 focus:ring-1 focus:ring-zinc-500"
-            >
-              {ROLE_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-            {errors.role && <p className="mt-1 text-xs text-red-600">{errors.role}</p>}
-          </div>
-
-          <div>
             <label htmlFor="email" className="block text-sm font-medium text-zinc-700">
-              E-mail <span className="font-normal text-zinc-400">(opcional)</span>
+              E-mail
             </label>
             <input
               id="email"
@@ -196,7 +138,7 @@ export default function RegisterPage() {
               value={form.email}
               onChange={(e) => updateField("email", e.target.value)}
               className="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-zinc-500 focus:ring-1 focus:ring-zinc-500"
-              placeholder="voce@empresa.com"
+              placeholder="voce@bwsiot.com"
             />
             {errors.email && <p className="mt-1 text-xs text-red-600">{errors.email}</p>}
           </div>
@@ -227,15 +169,20 @@ export default function RegisterPage() {
               >
                 Filial
               </label>
-              <input
+              <select
                 id="branch_id"
                 name="branch_id"
-                type="number"
                 value={form.branch_id}
                 onChange={(e) => updateField("branch_id", e.target.value)}
-                className="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-zinc-500 focus:ring-1 focus:ring-zinc-500"
-                placeholder="Ex: 1"
-              />
+                className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 outline-none focus:border-zinc-500 focus:ring-1 focus:ring-zinc-500"
+              >
+                <option value="">Selecione a filial</option>
+                {BRANCH_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
               {errors.branch_id && (
                 <p className="mt-1 text-xs text-red-600">{errors.branch_id}</p>
               )}
@@ -246,6 +193,10 @@ export default function RegisterPage() {
             <p className="text-xs text-zinc-400">
               Administradores nao possuem filial vinculada.
             </p>
+          )}
+
+          {errors.form && (
+            <p className="text-sm text-red-600">{errors.form}</p>
           )}
 
           <button
