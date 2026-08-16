@@ -7,6 +7,7 @@ export interface SessionUser {
   role: UserRole;
   email: string;
   branchId: number | null;
+  branch: { id: number; name: string } | null;
 }
 
 export const ROLE_LABELS: Record<UserRole, string> = {

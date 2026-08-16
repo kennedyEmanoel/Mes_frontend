@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ROLE_LABELS, SessionUser } from "../types";
+import { ROLE_LABELS, SessionUser } from "../../types";
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -71,7 +71,7 @@ export default function ProfilePage() {
           <div>
             <dt className="text-xs font-medium uppercase text-zinc-400">Filial</dt>
             <dd className="text-sm text-zinc-900">
-              {user.branchId !== null ? user.branchId : "-"}
+              {user.branch ? user.branch.name : "-"}
             </dd>
           </div>
         </dl>

@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useState, FormEvent } from "react";
 import { useRouter } from "next/navigation";
 
@@ -56,7 +55,7 @@ export default function LoginPage() {
         return;
       }
 
-      router.push("/profile");
+      router.push("/home");
     } catch {
       setErrors({ form: "Nao foi possivel conectar ao servidor." });
       setSubmitting(false);
@@ -128,13 +127,6 @@ export default function LoginPage() {
             {submitting ? "Entrando..." : "Entrar"}
           </button>
         </form>
-
-        <p className="mt-6 text-center text-sm text-zinc-500">
-          Nao tem uma conta?{" "}
-          <Link href="/register" className="font-medium text-zinc-900 underline">
-            Cadastre-se
-          </Link>
-        </p>
       </div>
     </main>
   );

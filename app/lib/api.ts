@@ -38,7 +38,7 @@ async function apiFetch(path: string, init?: RequestInit) {
   return response.json();
 }
 
-export interface RegisterUserPayload {
+export interface CreateUserPayload {
   name: string;
   role: UserRole;
   email: string;
@@ -46,10 +46,34 @@ export interface RegisterUserPayload {
   branch_id?: number;
 }
 
-export function registerUser(payload: RegisterUserPayload) {
+export function createUser(payload: CreateUserPayload, token: string) {
   return apiFetch("/users", {
     method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
     body: JSON.stringify(payload),
+  });
+}
+
+export interface UpdateUserPayload {
+  name?: string;
+  role?: UserRole;
+  email?: string;
+  password?: string;
+  branch_id?: number;
+}
+
+export function updateUser(id: number, payload: UpdateUserPayload, token: string) {
+  return apiFetch(`/users/${id}`, {
+    method: "PATCH",
+    headers: { Authorization: `Bearer ${token}` },
+    body: JSON.stringify(payload),
+  });
+}
+
+export function deleteUser(id: number, token: string) {
+  return apiFetch(`/users/${id}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${token}` },
   });
 }
 
@@ -88,6 +112,20 @@ export function logoutRequest(refreshToken: string) {
 
 export function fetchUser(id: number, token: string) {
   return apiFetch(`/users/${id}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
+export interface DirectoryUser {
+  id: number;
+  name: string;
+  email: string;
+  role: UserRole;
+  branch: { id: number; name: string } | null;
+}
+
+export function fetchUsers(token: string): Promise<DirectoryUser[]> {
+  return apiFetch("/users", {
     headers: { Authorization: `Bearer ${token}` },
   });
 }

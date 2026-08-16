@@ -13,8 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Mes",
-  description: "Camada visual de autenticacao (mock)",
+  title: "BWS IOT",
 };
 
 export default function RootLayout({
