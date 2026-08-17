@@ -54,6 +54,20 @@ export function createUser(payload: CreateUserPayload, token: string) {
   });
 }
 
+export interface RegisterUserPayload {
+  name: string;
+  email: string;
+  password: string;
+  branch_id: number;
+}
+
+export function registerUser(payload: RegisterUserPayload) {
+  return apiFetch("/users/register", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
 export interface UpdateUserPayload {
   name?: string;
   role?: UserRole;
