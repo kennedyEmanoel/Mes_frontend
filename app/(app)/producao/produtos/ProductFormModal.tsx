@@ -7,6 +7,7 @@ interface FormState {
   sku: string;
   commercial_name: string;
   version: string;
+  description: string;
 }
 
 interface FormErrors {
@@ -23,12 +24,13 @@ interface ProductFormModalProps {
 
 function initialState(product: DirectoryProduct | null): FormState {
   if (!product) {
-    return { sku: "", commercial_name: "", version: "" };
+    return { sku: "", commercial_name: "", version: "", description: "" };
   }
   return {
     sku: product.sku,
     commercial_name: product.commercialName,
     version: product.version ?? "",
+    description: product.description ?? "",
   };
 }
 
@@ -77,7 +79,8 @@ export function ProductFormModal({
         body: JSON.stringify({
           sku: form.sku.trim(),
           commercial_name: form.commercial_name.trim(),
-          version: form.version.trim() || undefined,
+          version: form.version.trim(),
+          description: form.description.trim(),
         }),
       });
 
@@ -132,6 +135,7 @@ export function ProductFormModal({
               id="commercial_name"
               type="text"
               value={form.commercial_name}
+              maxLength={80}
               onChange={(e) => updateField("commercial_name", e.target.value)}
               className="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-zinc-500 focus:ring-1 focus:ring-zinc-500"
               placeholder="Nome do produto"
@@ -149,9 +153,24 @@ export function ProductFormModal({
               id="version"
               type="text"
               value={form.version}
+              maxLength={20}
               onChange={(e) => updateField("version", e.target.value)}
               className="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-zinc-500 focus:ring-1 focus:ring-zinc-500"
               placeholder="Ex: 1.0"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="description" className="block text-sm font-medium text-zinc-700">
+              Descrição <span className="font-normal text-zinc-400">(opcional)</span>
+            </label>
+            <textarea
+              id="description"
+              rows={3}
+              value={form.description}
+              maxLength={300}
+              onChange={(e) => updateField("description", e.target.value)}
+              className="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-zinc-500 focus:ring-1 focus:ring-zinc-500"
             />
           </div>
 

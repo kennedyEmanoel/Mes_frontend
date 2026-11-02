@@ -8,13 +8,8 @@ import {
   PRODUCTION_ORDER_STATUSES,
   ProductionOrderStatus,
 } from "../../../../lib/api";
+import { BRANCH_OPTIONS } from "../../../../lib/branches";
 import { SessionUser } from "../../../../types";
-
-const BRANCH_OPTIONS: { value: string; label: string }[] = [
-  { value: "1", label: "Barueri" },
-  { value: "2", label: "Santa Rita do Sapucaí" },
-  { value: "3", label: "Belo Horizonte" },
-];
 
 // <input type="date"> devolve "YYYY-MM-DD"; o backend espera um DateTime ISO-8601 completo.
 function toIsoDateTime(dateOnly: string): string | undefined {

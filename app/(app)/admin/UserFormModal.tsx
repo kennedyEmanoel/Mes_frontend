@@ -2,13 +2,8 @@
 
 import { FormEvent, useState } from "react";
 import { ApiError, DirectoryUser } from "../../lib/api";
+import { BRANCH_OPTIONS } from "../../lib/branches";
 import { ROLE_LABELS, UserRole } from "../../types";
-
-const BRANCH_OPTIONS: { value: string; label: string }[] = [
-  { value: "1", label: "Barueri" },
-  { value: "2", label: "Santa Rita do Sapucaí" },
-  { value: "3", label: "Belo Horizonte" },
-];
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 

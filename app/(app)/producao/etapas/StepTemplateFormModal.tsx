@@ -72,7 +72,7 @@ export function StepTemplateFormModal({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: form.name.trim(),
-          description: form.description.trim() || undefined,
+          description: form.description.trim(),
         }),
       });
 
@@ -87,7 +87,7 @@ export function StepTemplateFormModal({
         form:
           error instanceof ApiError
             ? error.message
-            : "Nao foi possivel salvar o modelo de etapa. Tente novamente.",
+            : "Não foi possível salvar a etapa. Tente novamente.",
       });
       setSubmitting(false);
     }
@@ -97,7 +97,7 @@ export function StepTemplateFormModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4">
       <div className="w-full max-w-md rounded-lg border border-zinc-200 bg-white p-6 shadow-lg">
         <h2 className="text-base font-semibold text-zinc-900">
-          {editingStepTemplate ? "Editar modelo de etapa" : "Novo modelo de etapa"}
+          {editingStepTemplate ? "Editar etapa" : "Nova etapa"}
         </h2>
 
         <form className="mt-4 space-y-4" onSubmit={handleSubmit} noValidate>
@@ -109,6 +109,7 @@ export function StepTemplateFormModal({
               id="name"
               type="text"
               value={form.name}
+              maxLength={40}
               onChange={(e) => updateField("name", e.target.value)}
               className="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-zinc-500 focus:ring-1 focus:ring-zinc-500"
               placeholder="Ex: Montagem"
@@ -123,6 +124,7 @@ export function StepTemplateFormModal({
             <textarea
               id="description"
               value={form.description}
+              maxLength={300}
               onChange={(e) => updateField("description", e.target.value)}
               rows={3}
               className="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-zinc-500 focus:ring-1 focus:ring-zinc-500"

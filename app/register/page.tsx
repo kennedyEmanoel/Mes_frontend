@@ -3,12 +3,7 @@
 import Link from "next/link";
 import { useState, FormEvent } from "react";
 import { useRouter } from "next/navigation";
-
-const BRANCH_OPTIONS: { value: string; label: string }[] = [
-  { value: "1", label: "Barueri" },
-  { value: "2", label: "Santa Rita do Sapucaí" },
-  { value: "3", label: "Belo Horizonte" },
-];
+import { BRANCH_OPTIONS } from "../lib/branches";
 
 interface FormState {
   name: string;

@@ -1,95 +1,54 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { Breadcrumb } from "../../../components/Breadcrumb";
-import { DirectoryProduct } from "../../../lib/api";
-import { UserRole } from "../../../types";
+import { DeleteImpactModal } from "../../../components/DeleteImpactModal";
+import {
+  RegistryActions,
+  RegistryEmptyRow,
+  RegistryLoading,
+  RegistryTabs,
+  RegistryToolbar,
+  StatusBadge,
+} from "../../../components/Registry";
+import { DirectoryProduct, productLabel } from "../../../lib/api";
+import { useRegistry } from "../../../lib/useRegistry";
 import { ProductFormModal } from "./ProductFormModal";
 
-const MANAGE_ROLES: UserRole[] = ["manager", "analyst", "admin"];
+const BREADCRUMB = (
+  <Breadcrumb items={[{ label: "Produção", href: "/producao" }, { label: "Produtos" }]} />
+);
 
 export default function ProdutosPage() {
-  const router = useRouter();
-  const [canManage, setCanManage] = useState(false);
-  const [products, setProducts] = useState<DirectoryProduct[] | null>(null);
-  const [loading, setLoading] = useState(true);
+  const registry = useRegistry<DirectoryProduct>(
+    "/api/products",
+    "products",
+    (p) => `${p.sku} ${p.commercialName} ${p.version ?? ""} ${p.description ?? ""}`,
+  );
   const [modalProduct, setModalProduct] = useState<DirectoryProduct | null | "new">(null);
+  const [deletingProduct, setDeletingProduct] = useState<DirectoryProduct | null>(null);
 
-  function loadProducts() {
-    return fetch("/api/products")
-      .then((response) => {
-        if (!response.ok) throw new Error("failed to load products");
-        return response.json();
-      })
-      .then((data) => setProducts(data.products));
+  if (registry.loading) {
+    return <RegistryLoading breadcrumb={BREADCRUMB} />;
   }
 
-  useEffect(() => {
-    let cancelled = false;
-
-    fetch("/api/me")
-      .then((response) => {
-        if (!response.ok) throw new Error("unauthenticated");
-        return response.json();
-      })
-      .then((data) => {
-        if (cancelled) return;
-        setCanManage(MANAGE_ROLES.includes(data.user.role));
-        return loadProducts().then(() => {
-          if (!cancelled) setLoading(false);
-        });
-      })
-      .catch(() => {
-        if (!cancelled) router.push("/login");
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [router]);
-
-  async function handleDelete(product: DirectoryProduct) {
-    if (!window.confirm(`Excluir o produto "${product.commercialName}"?`)) return;
-
-    const response = await fetch(`/api/products/${product.id}`, { method: "DELETE" });
-    if (response.ok) {
-      loadProducts();
-    } else {
-      const body = await response.json().catch(() => null);
-      window.alert(body?.message ?? "Nao foi possivel excluir o produto.");
-    }
-  }
-
-  function handleSaved() {
-    setModalProduct(null);
-    loadProducts();
-  }
-
-  if (loading || !products) {
-    return (
-      <div>
-        <Breadcrumb items={[{ label: "Produção", href: "/producao" }, { label: "Produtos" }]} />
-        <div className="flex flex-1 items-center justify-center px-4 py-16">
-          <p className="text-sm text-zinc-500">Carregando...</p>
-        </div>
-      </div>
-    );
-  }
+  const columns = 5 + (registry.canManage ? 1 : 0);
 
   return (
     <div>
-      <Breadcrumb items={[{ label: "Produção", href: "/producao" }, { label: "Produtos" }]} />
+      {BREADCRUMB}
 
       <div className="px-6 py-6">
-        <div className="flex items-center justify-between">
+        <RegistryTabs />
+
+        <div className="mt-6 flex items-center justify-between">
           <div>
             <h1 className="text-base font-semibold text-zinc-900">Produtos</h1>
             <p className="mt-1 text-sm text-zinc-500">
-              Produtos utilizados nas ordens de produção.
+              Produtos fabricados, usados nos cartões e nas ordens de produção.
             </p>
           </div>
-          {canManage && (
+          {registry.canManage && (
             <button
               type="button"
               onClick={() => setModalProduct("new")}
@@ -100,42 +59,63 @@ export default function ProdutosPage() {
           )}
         </div>
 
-        <div className="mt-6 overflow-x-auto rounded-lg border border-zinc-200 bg-white">
+        <RegistryToolbar
+          search={registry.search}
+          onSearchChange={registry.setSearch}
+          searchPlaceholder="Buscar produto..."
+          showInactive={registry.showInactive}
+          onShowInactiveChange={registry.setShowInactive}
+          inactiveCount={registry.inactiveCount}
+          error={registry.error}
+          onDismissError={() => registry.setError(null)}
+        />
+
+        <div className="mt-4 overflow-x-auto rounded-lg border border-zinc-200 bg-white">
           <table className="min-w-full divide-y divide-zinc-200 text-sm">
             <thead className="bg-zinc-50">
               <tr>
                 <th className="px-4 py-3 text-left font-medium text-zinc-500">SKU</th>
                 <th className="px-4 py-3 text-left font-medium text-zinc-500">Nome comercial</th>
                 <th className="px-4 py-3 text-left font-medium text-zinc-500">Versão</th>
-                {canManage && (
+                <th className="px-4 py-3 text-left font-medium text-zinc-500">Descrição</th>
+                <th className="px-4 py-3 text-left font-medium text-zinc-500">Status</th>
+                {registry.canManage && (
                   <th className="px-4 py-3 text-left font-medium text-zinc-500">Ações</th>
                 )}
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-100">
-              {products.map((product) => (
-                <tr key={product.id}>
-                  <td className="px-4 py-3 text-zinc-900">{product.sku}</td>
-                  <td className="px-4 py-3 text-zinc-500">{product.commercialName}</td>
+              {registry.visible.length === 0 && (
+                <RegistryEmptyRow
+                  colSpan={columns}
+                  message={
+                    registry.items.length === 0
+                      ? "Nenhum produto cadastrado ainda."
+                      : "Nenhum produto encontrado."
+                  }
+                />
+              )}
+              {registry.visible.map((product) => (
+                <tr key={product.id} className={product.active ? "" : "text-zinc-400"}>
+                  <td className="px-4 py-3">{product.sku}</td>
+                  <td className="px-4 py-3 font-medium">{product.commercialName}</td>
                   <td className="px-4 py-3 text-zinc-500">{product.version ?? "-"}</td>
-                  {canManage && (
+                  <td className="max-w-xs truncate px-4 py-3 text-zinc-500">
+                    {product.description ?? "-"}
+                  </td>
+                  <td className="px-4 py-3">
+                    <StatusBadge active={product.active} />
+                  </td>
+                  {registry.canManage && (
                     <td className="px-4 py-3">
-                      <div className="flex gap-3">
-                        <button
-                          type="button"
-                          onClick={() => setModalProduct(product)}
-                          className="text-sm font-medium text-zinc-700 hover:text-zinc-900"
-                        >
-                          Editar
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleDelete(product)}
-                          className="text-sm font-medium text-red-600 hover:text-red-700"
-                        >
-                          Excluir
-                        </button>
-                      </div>
+                      <RegistryActions
+                        active={product.active}
+                        canManage={registry.canManage}
+                        canDelete={registry.canDelete}
+                        onEdit={() => setModalProduct(product)}
+                        onToggleActive={() => registry.toggleActive(product)}
+                        onDelete={() => setDeletingProduct(product)}
+                      />
                     </td>
                   )}
                 </tr>
@@ -149,7 +129,28 @@ export default function ProdutosPage() {
         <ProductFormModal
           editingProduct={modalProduct === "new" ? null : modalProduct}
           onClose={() => setModalProduct(null)}
-          onSaved={handleSaved}
+          onSaved={() => {
+            setModalProduct(null);
+            registry.reload();
+          }}
+        />
+      )}
+
+      {deletingProduct && (
+        <DeleteImpactModal
+          title="Excluir produto"
+          question={
+            <>
+              Excluir o produto <strong>{productLabel(deletingProduct)}</strong>?
+            </>
+          }
+          url={`/api/products/${deletingProduct.id}`}
+          deactivateHint="Para produto descontinuado, prefira Desativar."
+          onClose={() => setDeletingProduct(null)}
+          onDeleted={() => {
+            setDeletingProduct(null);
+            registry.reload();
+          }}
         />
       )}
     </div>

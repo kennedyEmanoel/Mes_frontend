@@ -2,9 +2,10 @@ import { NextRequest } from "next/server";
 import { createStepTemplate, fetchStepTemplates } from "../../lib/api";
 import { withAuth } from "../../lib/session";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const includeInactive = request.nextUrl.searchParams.get("include_inactive") === "true";
   return withAuth((token) =>
-    fetchStepTemplates(token).then((stepTemplates) => ({ stepTemplates })),
+    fetchStepTemplates(token, includeInactive).then((stepTemplates) => ({ stepTemplates })),
   );
 }
 
